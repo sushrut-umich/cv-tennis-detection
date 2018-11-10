@@ -1,8 +1,9 @@
 import cv2
 import sys
+from math import pi
 
 def green_filter(frame):
-    lowerBound = (26, 50, 150)
+    lowerBound = (26, 50, 120)
     upperBound = (60, 210, 255)
 
     mask = cv2.inRange(frame, lowerBound, upperBound)
@@ -22,13 +23,24 @@ def detect_tennisballs(frame):
 
     for i in range(len(contours)):
         contours[i] = cv2.approxPolyDP(contours[i], 3, True)
+
         centers[i], radius[i] = cv2.minEnclosingCircle(contours[i])
 
     for i in range(len(contours)):
         color = (0, 0, 255)
         cv2.drawContours(frame, contours, i, color, 1)
         rounded = (round(centers[i][0]), round(centers[i][1]))
-        cv2.circle(frame, rounded, int(radius[i]), color, 2)
+
+        conArea = cv2.contourArea(contours[i])
+        circArea = radius[i] * radius[i] * pi
+        percentA = round(conArea / circArea * 100)
+
+        conPer = cv2.arcLength(contours[i], True)
+        circPer = 2 * pi * radius[i]
+        percentP = round(conPer / circPer * 100)
+
+        if (percentP > 75 and percentA > 70):
+            cv2.circle(frame, rounded, int(radius[i]), color, 2)
 
     if(len(contours) != 0):
         return True, frame
